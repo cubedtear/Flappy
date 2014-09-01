@@ -1,0 +1,59 @@
+apply plugin: 'java'
+
+sourceCompatibility = '1.7'
+targetCompatibility = '1.7'
+version = '1.0'
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    compile group: 'org.lwjgl.lwjgl', name: 'lwjgl', version: '2.9.1'
+    compile group: 'org.lwjgl.lwjgl', name: 'lwjgl_util', version: '2.9.1'
+    compile group: 'io.github.aritzhack', name: 'aritzh-core', version: '1.4.1'
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+}
+
+System.setProperty("javassist.version", "3.18.2-GA")
+
+def nativesDir = "$buildDir/natives/"
+def librariesArchiveName = "Libraries-${version}.jar"
+
+task createLibraryJar(dependsOn: 'build', type: Jar) {
+    description = "Builds a Jar with all libraries and natives"
+
+    archiveName = librariesArchiveName
+    configurations.compile.resolvedConfiguration.resolvedArtifacts.each {
+        from(zipTree(it.file)) {
+            include "**"
+        }
+    }
+}
+
+task createFatJar(dependsOn: 'createLibraryJar', type: JavaExec) {
+    description = "Builds a fat runnable Jar with all libraries and natives"
+
+    classpath "$rootDir/JarSplicePlus/JarSplicePlus.jar"
+    main = 'com.elezeta.jarspliceplus.JarSplicePlusLauncher'
+    args '-i', jar.archivePath, createLibraryJar.archivePath
+    args '-m', 'io.github.aritzhack.lwjglTest2.Main'
+    args '-o', "${createLibraryJar.destinationDir}/Fat-${project.version}.jar"
+}
+
+task copyNatives(type: Copy) {
+    description = "Copies natives into a folder in the build directory. Intended for debugging use only"
+
+    destinationDir = file(nativesDir)
+    ['windows', 'linux', 'osx'].each { platform ->
+        copy {
+            configurations.compile.resolvedConfiguration.resolvedArtifacts.findAll {
+                it.classifier == "natives-$platform"
+            }.each {
+                from zipTree(it.file)
+            }
+            into nativesDir
+        }
+    }
+}
