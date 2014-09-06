@@ -82,7 +82,6 @@ public class Main implements Runnable {
 
         while (running && !Display.isCloseRequested()) {
             render();
-
             Display.update();
         }
         Display.destroy();
@@ -90,7 +89,6 @@ public class Main implements Runnable {
 
     private void init() {
         LOG.i("OpenGL {}", glGetString(GL_VERSION));
-
         glClearColor(1f, 1f, 1f, 1f);
     }
 
