@@ -27,6 +27,8 @@ import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.opengl.PixelFormat;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL20.glUseProgram;
+import static org.lwjgl.opengl.GL30.*;
 
 /**
  * @author Aritz Lopez
@@ -41,14 +43,14 @@ public class Main implements Runnable {
     private boolean running = false;
     private Thread thread;
 
+    public static void main(String[] args) {
+        new Main().start();
+    }
+
     public void start() {
         running = true;
         this.thread = new Thread(this, "Display");
         thread.start();
-    }
-
-    public static void main(String[] args) {
-        new Main().start();
     }
 
     @Override
@@ -69,6 +71,15 @@ public class Main implements Runnable {
 
         init();
 
+        int vao = glGenVertexArrays();
+        glBindVertexArray(vao);
+
+        ShaderUtils.LOG = Main.LOG;
+
+        int shader = ShaderUtils.load("vert.glsl", "frag.glsl");
+
+        glUseProgram(shader);
+
         while (running && !Display.isCloseRequested()) {
             render();
 
@@ -85,5 +96,6 @@ public class Main implements Runnable {
 
     private void render() {
         glClear(GL_COLOR_BUFFER_BIT);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
     }
 }
